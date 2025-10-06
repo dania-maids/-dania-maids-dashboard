@@ -50,7 +50,7 @@ interface OvertimeRecord {
 export default function HoursReportsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('cleaner');
-  const [activeFilter, setActiveFilter] = useState<QuickFilter>('thisMonth');
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('today');
   const [dateRange, setDateRange] = useState({
     start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -135,8 +135,9 @@ export default function HoursReportsPage() {
   };
 
   const applyCustomRange = () => {
-    setDateRange(tempDateRange);
-  };
+  setDateRange(tempDateRange);
+  setShowCustomPicker(false); // ← إخفاء البوكسات
+};
 
   const calculateIdleTime = (bookings: any[]) => {
     if (bookings.length <= 1) return 0;
@@ -577,6 +578,25 @@ export default function HoursReportsPage() {
           >
             Apply
           </button>
+        </div>
+      )}
+
+      {activeFilter === 'custom' && !showCustomPicker && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-900">Selected Period:</p>
+              <p className="text-lg font-semibold text-blue-700">
+                {format(parseISO(dateRange.start), 'MMM dd, yyyy')} - {format(parseISO(dateRange.end), 'MMM dd, yyyy')}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCustomPicker(true)}
+              className="px-4 py-2 bg-white text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-300"
+            >
+              Change Dates
+            </button>
+          </div>
         </div>
       )}
 

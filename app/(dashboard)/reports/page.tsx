@@ -64,14 +64,14 @@ type QuickFilter = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth'
 export default function ReportsPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<QuickFilter>('thisMonth');
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('today');
   const [dateRange, setDateRange] = useState({
-    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+    start: format(startOfDay(new Date()), 'yyyy-MM-dd'),
+    end: format(endOfDay(new Date()), 'yyyy-MM-dd'),
   });
   const [tempDateRange, setTempDateRange] = useState({
-    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-    end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+    start: format(startOfDay(new Date()), 'yyyy-MM-dd'),
+    end: format(endOfDay(new Date()), 'yyyy-MM-dd'),
   });
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string>('');
@@ -132,8 +132,8 @@ export default function ReportsPage() {
         end = endOfYear(now);
         break;
       default:
-        start = startOfMonth(now);
-        end = endOfMonth(now);
+        start = startOfDay(now);
+        end = endOfDay(now);
     }
 
     setDateRange({
@@ -144,6 +144,7 @@ export default function ReportsPage() {
 
   const applyCustomRange = () => {
     setDateRange(tempDateRange);
+    setShowCustomPicker(false);
   };
 
   const calculateAreaStats = (area: string) => {
@@ -262,7 +263,6 @@ export default function ReportsPage() {
         { name: 'Without Materials', value: withoutMaterials },
       ];
 
-      // Area analysis
       const areaMap = new Map<string, { bookings: number; sales: number }>();
       allData.forEach(booking => {
         const area = booking.client_area;
@@ -334,7 +334,6 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with Filters */}
       <div className="space-y-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
@@ -343,7 +342,6 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        {/* Quick Filters */}
         <div className="flex flex-wrap gap-2">
           {quickFilters.map(filter => (
             <button
@@ -360,7 +358,6 @@ export default function ReportsPage() {
           ))}
         </div>
 
-        {/* Custom Date Picker */}
         {showCustomPicker && (
           <div className="bg-white border border-gray-300 rounded-lg p-4 flex gap-4 items-center shadow-sm">
             <div className="flex items-center gap-2">
@@ -389,9 +386,27 @@ export default function ReportsPage() {
             </button>
           </div>
         )}
+
+        {activeFilter === 'custom' && !showCustomPicker && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">Selected Period:</p>
+                <p className="text-lg font-semibold text-blue-700">
+                  {format(parseISO(dateRange.start), 'MMM dd, yyyy')} - {format(parseISO(dateRange.end), 'MMM dd, yyyy')}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCustomPicker(true)}
+                className="px-4 py-2 bg-white text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-300"
+              >
+                Change Dates
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Sales"
@@ -443,7 +458,6 @@ export default function ReportsPage() {
         />
       </div>
 
-      {/* Area Selector Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-4">
           <MapPin className="w-6 h-6 text-blue-600" />
@@ -490,7 +504,6 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
@@ -545,7 +558,6 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Top Areas Chart */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Top 10 Areas by Sales
@@ -562,7 +574,6 @@ export default function ReportsPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Top Cleaners Chart */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Top Performers (Selected Period)
