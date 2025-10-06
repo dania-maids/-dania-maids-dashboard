@@ -89,8 +89,7 @@ const reportItems = [
   {
     title: 'Financial Reports',
     href: '/reports/financial',
-    icon: CreditCard,
-    disabled: true
+    icon: CreditCard
   }
 ]
 
@@ -186,23 +185,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 return (
                   <Link
                     key={report.href}
-                    href={report.disabled ? '#' : report.href}
+                    href={report.href}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
                         ? 'bg-blue-50 text-blue-600 font-medium'
-                        : report.disabled
-                        ? 'text-gray-400 cursor-not-allowed'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
-                    onClick={(e) => report.disabled && e.preventDefault()}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span>{report.title}</span>
-                    {report.disabled && (
-                      <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
-                        Soon
-                      </span>
-                    )}
                   </Link>
                 )
               })}
