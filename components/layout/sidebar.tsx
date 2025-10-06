@@ -19,7 +19,8 @@ import {
   UsersRound,
   CreditCard,
   Menu,
-  X
+  X,
+  TruckIcon
 } from 'lucide-react'
 
 const menuItems = [
@@ -47,6 +48,11 @@ const menuItems = [
     title: 'Drivers',
     href: '/drivers',
     icon: Truck
+  },
+  {
+    title: 'Logistics',
+    href: '/logistics',
+    icon: TruckIcon
   },
   {
     title: 'Orders',
@@ -110,7 +116,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
-      {/* Header with Toggle */}
       <div className="p-6 border-b flex items-center justify-between">
         {!isCollapsed && (
           <h1 className="text-2xl font-bold text-gray-800">Dania Maids</h1>
@@ -151,7 +156,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           )
         })}
 
-        {/* Reports Section with Dropdown */}
         <div className="mt-1">
           <button
             onClick={() => !isCollapsed && setReportsOpen(!reportsOpen)}
@@ -175,7 +179,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             )}
           </button>
 
-          {/* Dropdown Menu */}
           {reportsOpen && !isCollapsed && (
             <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-4">
               {reportItems.map((report) => {
