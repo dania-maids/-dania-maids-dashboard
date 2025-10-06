@@ -17,7 +17,9 @@ import {
   DollarSign,
   Clock,
   UsersRound,
-  CreditCard
+  CreditCard,
+  Menu,
+  X
 } from 'lucide-react'
 
 const menuItems = [
@@ -92,16 +94,40 @@ const reportItems = [
   }
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean
+  setIsCollapsed: (collapsed: boolean) => void
+}
+
+export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname()
   const [reportsOpen, setReportsOpen] = useState(pathname.startsWith('/reports'))
 
   const isReportsActive = pathname.startsWith('/reports')
 
   return (
-    <div className="w-64 bg-white border-r h-screen fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6 border-b">
-        <h1 className="text-2xl font-bold text-gray-800">Dania Maids</h1>
+    <div 
+      className={`bg-white border-r h-screen fixed left-0 top-0 overflow-y-auto transition-all duration-300 ${
+        isCollapsed ? 'w-20' : 'w-64'
+      }`}
+    >
+      {/* Header with Toggle */}
+      <div className="p-6 border-b flex items-center justify-between">
+        {!isCollapsed && (
+          <h1 className="text-2xl font-bold text-gray-800">Dania Maids</h1>
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+            isCollapsed ? 'mx-auto' : ''
+          }`}
+        >
+          {isCollapsed ? (
+            <Menu className="h-5 w-5 text-gray-600" />
+          ) : (
+            <X className="h-5 w-5 text-gray-600" />
+          )}
+        </button>
       </div>
       
       <nav className="px-4 py-4">
@@ -117,10 +143,11 @@ export function Sidebar() {
                 isActive
                   ? 'bg-blue-50 text-blue-600 font-medium'
                   : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title={isCollapsed ? item.title : ''}
             >
-              <Icon className="h-5 w-5" />
-              {item.title}
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span>{item.title}</span>}
             </Link>
           )
         })}
@@ -128,26 +155,29 @@ export function Sidebar() {
         {/* Reports Section with Dropdown */}
         <div className="mt-1">
           <button
-            onClick={() => setReportsOpen(!reportsOpen)}
+            onClick={() => !isCollapsed && setReportsOpen(!reportsOpen)}
             className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors ${
               isReportsActive
                 ? 'bg-blue-50 text-blue-600 font-medium'
                 : 'text-gray-600 hover:bg-gray-50'
-            }`}
+            } ${isCollapsed ? 'justify-center' : ''}`}
+            title={isCollapsed ? 'Reports' : ''}
           >
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-5 w-5" />
-              <span>Reports</span>
+            <div className={`flex items-center gap-3 ${isCollapsed ? '' : ''}`}>
+              <BarChart3 className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span>Reports</span>}
             </div>
-            <ChevronDown 
-              className={`h-4 w-4 transition-transform ${
-                reportsOpen ? 'rotate-180' : ''
-              }`}
-            />
+            {!isCollapsed && (
+              <ChevronDown 
+                className={`h-4 w-4 transition-transform ${
+                  reportsOpen ? 'rotate-180' : ''
+                }`}
+              />
+            )}
           </button>
 
           {/* Dropdown Menu */}
-          {reportsOpen && (
+          {reportsOpen && !isCollapsed && (
             <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-4">
               {reportItems.map((report) => {
                 const Icon = report.icon
@@ -166,8 +196,8 @@ export function Sidebar() {
                     }`}
                     onClick={(e) => report.disabled && e.preventDefault()}
                   >
-                    <Icon className="h-4 w-4" />
-                    {report.title}
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span>{report.title}</span>
                     {report.disabled && (
                       <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                         Soon
