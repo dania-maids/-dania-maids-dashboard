@@ -64,14 +64,14 @@ type QuickFilter = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth'
 export default function ReportsPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<QuickFilter>('today');
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('thisMonth');
   const [dateRange, setDateRange] = useState({
-    start: format(startOfDay(new Date()), 'yyyy-MM-dd'),
-    end: format(endOfDay(new Date()), 'yyyy-MM-dd'),
+    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
   });
   const [tempDateRange, setTempDateRange] = useState({
-    start: format(startOfDay(new Date()), 'yyyy-MM-dd'),
-    end: format(endOfDay(new Date()), 'yyyy-MM-dd'),
+    start: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    end: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
   });
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const [selectedArea, setSelectedArea] = useState<string>('');
@@ -132,8 +132,8 @@ export default function ReportsPage() {
         end = endOfYear(now);
         break;
       default:
-        start = startOfDay(now);
-        end = endOfDay(now);
+        start = startOfMonth(now);
+        end = endOfMonth(now);
     }
 
     setDateRange({
@@ -150,7 +150,7 @@ export default function ReportsPage() {
   const calculateAreaStats = (area: string) => {
     if (!data) return;
 
-    const { data: baseData } = supabase
+    supabase
       .from('vw_reports_base')
       .select('final_price')
       .eq('client_area', area)
@@ -333,132 +333,165 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="space-y-4">
+    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-500 text-sm mt-1">
             {format(parseISO(dateRange.start), 'MMM dd, yyyy')} - {format(parseISO(dateRange.end), 'MMM dd, yyyy')}
           </p>
         </div>
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          {quickFilters.map(filter => (
-            <button
-              key={filter.value}
-              onClick={() => handleQuickFilter(filter.value)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                activeFilter === filter.value
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
+      {/* Quick Filters */}
+      <div className="flex flex-wrap gap-2">
+        {quickFilters.map(filter => (
+          <button
+            key={filter.value}
+            onClick={() => handleQuickFilter(filter.value)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeFilter === filter.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom Date Picker */}
+      {showCustomPicker && (
+        <div className="bg-white rounded-xl p-4 flex gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">From:</label>
+            <input
+              type="date"
+              value={tempDateRange.start}
+              onChange={e => setTempDateRange({ ...tempDateRange, start: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">To:</label>
+            <input
+              type="date"
+              value={tempDateRange.end}
+              onChange={e => setTempDateRange({ ...tempDateRange, end: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            onClick={applyCustomRange}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            Apply
+          </button>
+        </div>
+      )}
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white/60 backdrop-blur-sm border border-blue-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Sales</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(data.totalSales)}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
         </div>
 
-        {showCustomPicker && (
-          <div className="bg-white border border-gray-300 rounded-lg p-4 flex gap-4 items-center shadow-sm">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">From:</label>
-              <input
-                type="date"
-                value={tempDateRange.start}
-                onChange={e => setTempDateRange({ ...tempDateRange, start: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        <div className="bg-white/60 backdrop-blur-sm border border-green-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Avg Booking Price</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(data.avgBookingPrice)}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">To:</label>
-              <input
-                type="date"
-                value={tempDateRange.end}
-                onChange={e => setTempDateRange({ ...tempDateRange, end: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={applyCustomRange}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Apply
-            </button>
-          </div>
-        )}
-
-        {activeFilter === 'custom' && !showCustomPicker && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-900">Selected Period:</p>
-                <p className="text-lg font-semibold text-blue-700">
-                  {format(parseISO(dateRange.start), 'MMM dd, yyyy')} - {format(parseISO(dateRange.end), 'MMM dd, yyyy')}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCustomPicker(true)}
-                className="px-4 py-2 bg-white text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-300"
-              >
-                Change Dates
-              </button>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-purple-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Bookings</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{data.totalBookings}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-orange-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Hours</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{data.totalHours.toFixed(1)}</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-indigo-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Avg Hourly Rate</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(data.avgHourlyRate)}</p>
+            </div>
+            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+              <Activity className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-pink-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">New Customers</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{data.newCustomers}</p>
+            </div>
+            <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+              <Users className="w-6 h-6 text-pink-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-red-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Pending Payments</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(data.pendingPayments)}</p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <CreditCard className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-yellow-100 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Discounts</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(data.totalDiscounts)}</p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Tag className="w-6 h-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Sales"
-          value={formatCurrency(data.totalSales)}
-          icon={DollarSign}
-          color="blue"
-        />
-        <StatCard
-          title="Avg Booking Price"
-          value={formatCurrency(data.avgBookingPrice)}
-          icon={TrendingUp}
-          color="green"
-        />
-        <StatCard
-          title="Total Bookings"
-          value={data.totalBookings.toString()}
-          icon={Calendar}
-          color="purple"
-        />
-        <StatCard
-          title="Total Hours"
-          value={data.totalHours.toFixed(1)}
-          icon={Clock}
-          color="orange"
-        />
-        <StatCard
-          title="Avg Hourly Rate"
-          value={formatCurrency(data.avgHourlyRate)}
-          icon={Activity}
-          color="indigo"
-        />
-        <StatCard
-          title="New Customers"
-          value={data.newCustomers.toString()}
-          icon={Users}
-          color="pink"
-        />
-        <StatCard
-          title="Pending Payments"
-          value={formatCurrency(data.pendingPayments)}
-          icon={CreditCard}
-          color="red"
-        />
-        <StatCard
-          title="Total Discounts"
-          value={formatCurrency(data.totalDiscounts)}
-          icon={Tag}
-          color="yellow"
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      {/* Area Analysis */}
+      <div className="bg-white rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
           <MapPin className="w-6 h-6 text-blue-600" />
           <h3 className="text-lg font-semibold text-gray-900">Area Analysis</h3>
@@ -471,7 +504,7 @@ export default function ReportsPage() {
             <select
               value={selectedArea}
               onChange={e => setSelectedArea(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Choose an area...</option>
               {data.allAreas.map(area => (
@@ -504,8 +537,9 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data.salesTrend}>
@@ -531,7 +565,7 @@ export default function ReportsPage() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Services Distribution
           </h3>
@@ -558,7 +592,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Top 10 Areas by Sales
         </h3>
@@ -574,9 +608,9 @@ export default function ReportsPage() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Top Performers (Selected Period)
+          Top Performers
         </h3>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={data.topCleaners}>
@@ -588,40 +622,6 @@ export default function ReportsPage() {
             <Bar dataKey="sales" fill="#3b82f6" name="Sales" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: React.ElementType;
-  color: 'blue' | 'green' | 'purple' | 'orange' | 'indigo' | 'pink' | 'red' | 'yellow';
-}
-
-function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    orange: 'bg-orange-50 text-orange-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
-    pink: 'bg-pink-50 text-pink-600',
-    red: 'bg-red-50 text-red-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
-        </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="w-6 h-6" />
-        </div>
       </div>
     </div>
   );
