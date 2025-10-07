@@ -13,6 +13,7 @@ export default function DashboardLayout({
   const { user, loading } = useAuth()
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,6 +23,7 @@ export default function DashboardLayout({
 
   // Load sidebar state from localStorage
   useEffect(() => {
+    setMounted(true)
     const saved = localStorage.getItem('sidebarCollapsed')
     if (saved !== null) {
       setSidebarCollapsed(JSON.parse(saved))
@@ -30,8 +32,10 @@ export default function DashboardLayout({
 
   // Save sidebar state to localStorage
   useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed))
-  }, [sidebarCollapsed])
+    if (mounted) {
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed))
+    }
+  }, [sidebarCollapsed, mounted])
 
   if (loading) {
     return (
@@ -49,7 +53,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
       <Sidebar isCollapsed={sidebarCollapsed} setIsCollapsed={setSidebarCollapsed} />
       <main 
         className={`flex-1 overflow-auto transition-all duration-300 ${
