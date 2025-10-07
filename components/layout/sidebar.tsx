@@ -20,7 +20,8 @@ import {
   CreditCard,
   Menu,
   X,
-  TruckIcon
+  TruckIcon,
+  Wallet
 } from 'lucide-react'
 
 const menuItems = [
@@ -53,6 +54,11 @@ const menuItems = [
     title: 'Logistics',
     href: '/logistics',
     icon: TruckIcon
+  },
+  {
+    title: 'Collections',
+    href: '/collections',
+    icon: Wallet
   },
   {
     title: 'Orders',
