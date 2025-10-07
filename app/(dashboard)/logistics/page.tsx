@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { format, addDays } from 'date-fns';
-import { Calendar, Table, LayoutGrid, Search, Save, AlertCircle, MapPin, Phone } from 'lucide-react';
+import { Calendar, Table, LayoutGrid, Search, Save, AlertCircle, MapPin, Phone, Sparkles, Circle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -18,6 +18,8 @@ interface BookingData {
   booking_date: string;
   start_time: string;
   end_time: string;
+  duration_hours: number;
+  with_materials: boolean;
   client_name: string;
   client_mobile: string;
   client_area: string;
@@ -168,6 +170,8 @@ export default function LogisticsPage() {
           booking_date: b.booking_date,
           start_time: b.start_time,
           end_time: b.end_time,
+          duration_hours: b.duration_hours,
+          with_materials: b.with_materials,
           client_name: b.client_name,
           client_mobile: formatMobile(b.client_mobile),
           client_area: b.client_area,
@@ -571,14 +575,17 @@ function TableView({
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cleaner</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Time</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">End Time</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Materials</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mobile</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Area</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Street</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Building</th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cleaner</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pickup Driver</th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dropoff Driver</th>
           </tr>
@@ -586,8 +593,30 @@ function TableView({
         <tbody className="bg-white divide-y divide-gray-200">
           {bookings.map(booking => (
             <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-3 py-4 text-sm font-medium text-gray-900">
+              <td className="px-3 py-4 text-sm font-medium text-gray-900">{booking.cleaner_name}</td>
+              <td className="px-3 py-4 text-sm text-gray-900">
                 {booking.start_time.substring(0, 5)}
+              </td>
+              <td className="px-3 py-4 text-sm text-gray-900">
+                {booking.end_time.substring(0, 5)}
+              </td>
+              <td className="px-3 py-4 text-sm">
+                <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                  {booking.duration_hours} hrs
+                </span>
+              </td>
+              <td className="px-3 py-4 text-sm">
+                {booking.with_materials ? (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium w-fit">
+                    <Sparkles className="w-3 h-3" />
+                    With
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium w-fit">
+                    <Circle className="w-3 h-3" />
+                    Without
+                  </span>
+                )}
               </td>
               <td className="px-3 py-4 text-sm text-gray-900">{booking.client_name}</td>
               <td className="px-3 py-4 text-sm text-gray-600">
@@ -605,7 +634,7 @@ function TableView({
                   <div>
                     <p className="font-medium">{booking.client_area}</p>
                     {booking.client_location_url && (
-                     <a 
+                      <a
                         href={booking.client_location_url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -620,7 +649,6 @@ function TableView({
               <td className="px-3 py-4 text-sm text-gray-600">{booking.client_zone || '-'}</td>
               <td className="px-3 py-4 text-sm text-gray-600">{booking.client_street || '-'}</td>
               <td className="px-3 py-4 text-sm text-gray-600">{booking.client_building || '-'}</td>
-              <td className="px-3 py-4 text-sm text-gray-600">{booking.cleaner_name}</td>
               <td className="px-3 py-4">
                 <div className="flex items-center gap-2">
                   <select
@@ -723,12 +751,39 @@ function CardView({
           key={booking.id}
           className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow"
         >
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs font-medium text-gray-500">{booking.start_time.substring(0, 5)}</p>
-          </div>
-
-          <div className="space-y-2 mb-4">
+          <div className="space-y-3">
             <div>
+              <p className="text-xs text-gray-500">Cleaner</p>
+              <p className="text-sm font-semibold text-gray-900">{booking.cleaner_name}</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div>
+                <p className="text-xs text-gray-500">Time</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {booking.start_time.substring(0, 5)} → {booking.end_time.substring(0, 5)}
+                </p>
+              </div>
+              <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                {booking.duration_hours} hrs
+              </span>
+            </div>
+
+            <div>
+              {booking.with_materials ? (
+                <span className="flex items-center gap-1 px-2 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium w-fit">
+                  <Sparkles className="w-3 h-3" />
+                  With Materials
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium w-fit">
+                  <Circle className="w-3 h-3" />
+                  Without Materials
+                </span>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-gray-200">
               <p className="text-xs text-gray-500">Client</p>
               <p className="text-sm font-medium text-gray-900">{booking.client_name}</p>
               <a 
@@ -739,6 +794,7 @@ function CardView({
                 {booking.client_mobile}
               </a>
             </div>
+
             <div>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
@@ -749,7 +805,7 @@ function CardView({
               {booking.client_street && <p className="text-xs text-gray-600">Street: {booking.client_street}</p>}
               {booking.client_building && <p className="text-xs text-gray-600">Building: {booking.client_building}</p>}
               {booking.client_location_url && (
-               <a 
+                <a
                   href={booking.client_location_url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -759,74 +815,70 @@ function CardView({
                 </a>
               )}
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Cleaner</p>
-              <p className="text-sm text-gray-700">{booking.cleaner_name}</p>
-            </div>
-          </div>
 
-          <div className="space-y-3 pt-3 border-t border-gray-200">
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Pickup Driver</label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={booking.pickup_driver_id || ''}
-                  onChange={e =>
-                    onDriverChange(booking.id, booking.transport_id, 'pickup', e.target.value || null)
-                  }
-                  className={`flex-1 px-2 py-1.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                    booking.pickup_driver_id 
-                      ? `${getDriverColor(booking.pickup_driver_name || '').bg} ${getDriverColor(booking.pickup_driver_name || '').text} ${getDriverColor(booking.pickup_driver_name || '').border}`
-                      : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select</option>
-                  {drivers.map(driver => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name}
-                    </option>
-                  ))}
-                </select>
-                {booking.pickup_driver_id && (
-                  <input
-                    type="checkbox"
-                    checked={booking.pickup_completed || false}
-                    onChange={e => onCompletedChange(booking.id, 'pickup', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
+            <div className="space-y-2 pt-3 border-t border-gray-200">
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Pickup Driver</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={booking.pickup_driver_id || ''}
+                    onChange={e =>
+                      onDriverChange(booking.id, booking.transport_id, 'pickup', e.target.value || null)
+                    }
+                    className={`flex-1 px-2 py-1.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      booking.pickup_driver_id 
+                        ? `${getDriverColor(booking.pickup_driver_name || '').bg} ${getDriverColor(booking.pickup_driver_name || '').text} ${getDriverColor(booking.pickup_driver_name || '').border}`
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Select</option>
+                    {drivers.map(driver => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </option>
+                    ))}
+                  </select>
+                  {booking.pickup_driver_id && (
+                    <input
+                      type="checkbox"
+                      checked={booking.pickup_completed || false}
+                      onChange={e => onCompletedChange(booking.id, 'pickup', e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">Dropoff Driver</label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={booking.dropoff_driver_id || ''}
-                  onChange={e =>
-                    onDriverChange(booking.id, booking.transport_id, 'dropoff', e.target.value || null)
-                  }
-                  className={`flex-1 px-2 py-1.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                    booking.dropoff_driver_id 
-                      ? `${getDriverColor(booking.dropoff_driver_name || '').bg} ${getDriverColor(booking.dropoff_driver_name || '').text} ${getDriverColor(booking.dropoff_driver_name || '').border}`
-                      : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select</option>
-                  {drivers.map(driver => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name}
-                    </option>
-                  ))}
-                </select>
-                {booking.dropoff_driver_id && (
-                  <input
-                    type="checkbox"
-                    checked={booking.dropoff_completed || false}
-                    onChange={e => onCompletedChange(booking.id, 'dropoff', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">Dropoff Driver</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={booking.dropoff_driver_id || ''}
+                    onChange={e =>
+                      onDriverChange(booking.id, booking.transport_id, 'dropoff', e.target.value || null)
+                    }
+                    className={`flex-1 px-2 py-1.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      booking.dropoff_driver_id 
+                        ? `${getDriverColor(booking.dropoff_driver_name || '').bg} ${getDriverColor(booking.dropoff_driver_name || '').text} ${getDriverColor(booking.dropoff_driver_name || '').border}`
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Select</option>
+                    {drivers.map(driver => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </option>
+                    ))}
+                  </select>
+                  {booking.dropoff_driver_id && (
+                    <input
+                      type="checkbox"
+                      checked={booking.dropoff_completed || false}
+                      onChange={e => onCompletedChange(booking.id, 'dropoff', e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -945,88 +997,113 @@ function BookingCard({
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <p className="text-xs font-medium text-gray-500">{booking.start_time.substring(0, 5)}</p>
-      </div>
-
-      <div className="space-y-1 mb-3 text-sm">
-        <p className="font-medium text-gray-900">{booking.client_name}</p>
-        <a 
-          href={`tel:${booking.client_mobile}`}
-          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-        >
-          <Phone className="w-3 h-3" />
-          {booking.client_mobile}
-        </a>
-        <p className="text-xs text-gray-600 flex items-start gap-1">
-          <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
-          <span>{booking.client_area}</span>
-        </p>
-        <p className="text-xs text-gray-600">{booking.cleaner_name}</p>
-      </div>
-
-      <div className="space-y-2 pt-2 border-t border-gray-200">
+      <div className="space-y-2">
         <div>
-          <label className="text-xs text-gray-600 block mb-1">Pickup</label>
-          <div className="flex items-center gap-2">
-            <select
-              value={booking.pickup_driver_id || ''}
-              onChange={e =>
-                onDriverChange(booking.id, booking.transport_id, 'pickup', e.target.value || null)
-              }
-              className={`flex-1 px-2 py-1 text-xs border-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                booking.pickup_driver_id 
-                  ? `${getDriverColor(booking.pickup_driver_name || '').bg} ${getDriverColor(booking.pickup_driver_name || '').text} ${getDriverColor(booking.pickup_driver_name || '').border}`
-                  : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select</option>
-              {drivers.map(driver => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.name}
-                </option>
-              ))}
-            </select>
-            {booking.pickup_driver_id && (
-              <input
-                type="checkbox"
-                checked={booking.pickup_completed || false}
-                onChange={e => onCompletedChange(booking.id, 'pickup', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
-              />
-            )}
-          </div>
+          <p className="text-xs text-gray-500">Cleaner</p>
+          <p className="text-sm font-semibold text-gray-900">{booking.cleaner_name}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-medium text-gray-900">
+            {booking.start_time.substring(0, 5)} → {booking.end_time.substring(0, 5)}
+          </p>
+          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+            {booking.duration_hours}h
+          </span>
         </div>
 
         <div>
-          <label className="text-xs text-gray-600 block mb-1">Dropoff</label>
-          <div className="flex items-center gap-2">
-            <select
-              value={booking.dropoff_driver_id || ''}
-              onChange={e =>
-                onDriverChange(booking.id, booking.transport_id, 'dropoff', e.target.value || null)
-              }
-              className={`flex-1 px-2 py-1 text-xs border-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                booking.dropoff_driver_id 
-                  ? `${getDriverColor(booking.dropoff_driver_name || '').bg} ${getDriverColor(booking.dropoff_driver_name || '').text} ${getDriverColor(booking.dropoff_driver_name || '').border}`
-                  : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select</option>
-              {drivers.map(driver => (
-                <option key={driver.id} value={driver.id}>
-                  {driver.name}
-                </option>
-              ))}
-            </select>
-            {booking.dropoff_driver_id && (
-              <input
-                type="checkbox"
-                checked={booking.dropoff_completed || false}
-                onChange={e => onCompletedChange(booking.id, 'dropoff', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
-              />
-            )}
+          {booking.with_materials ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium w-fit">
+              <Sparkles className="w-3 h-3" />
+              With
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium w-fit">
+              <Circle className="w-3 h-3" />
+              Without
+            </span>
+          )}
+        </div>
+
+        <div className="pt-2 border-t border-gray-200">
+          <p className="font-medium text-sm text-gray-900">{booking.client_name}</p>
+          <a 
+            href={`tel:${booking.client_mobile}`}
+            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+          >
+            <Phone className="w-3 h-3" />
+            {booking.client_mobile}
+          </a>
+          <p className="text-xs text-gray-600 flex items-start gap-1 mt-1">
+            <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
+            <span>{booking.client_area}</span>
+          </p>
+        </div>
+
+        <div className="space-y-2 pt-2 border-t border-gray-200">
+          <div>
+            <label className="text-xs text-gray-600 block mb-1">Pickup</label>
+            <div className="flex items-center gap-2">
+              <select
+                value={booking.pickup_driver_id || ''}
+                onChange={e =>
+                  onDriverChange(booking.id, booking.transport_id, 'pickup', e.target.value || null)
+                }
+                className={`flex-1 px-2 py-1 text-xs border-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                  booking.pickup_driver_id 
+                    ? `${getDriverColor(booking.pickup_driver_name || '').bg} ${getDriverColor(booking.pickup_driver_name || '').text} ${getDriverColor(booking.pickup_driver_name || '').border}`
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select</option>
+                {drivers.map(driver => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.name}
+                  </option>
+                ))}
+              </select>
+              {booking.pickup_driver_id && (
+                <input
+                  type="checkbox"
+                  checked={booking.pickup_completed || false}
+                  onChange={e => onCompletedChange(booking.id, 'pickup', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-600 block mb-1">Dropoff</label>
+            <div className="flex items-center gap-2">
+              <select
+                value={booking.dropoff_driver_id || ''}
+                onChange={e =>
+                  onDriverChange(booking.id, booking.transport_id, 'dropoff', e.target.value || null)
+                }
+                className={`flex-1 px-2 py-1 text-xs border-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                  booking.dropoff_driver_id 
+                    ? `${getDriverColor(booking.dropoff_driver_name || '').bg} ${getDriverColor(booking.dropoff_driver_name || '').text} ${getDriverColor(booking.dropoff_driver_name || '').border}`
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select</option>
+                {drivers.map(driver => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.name}
+                  </option>
+                ))}
+              </select>
+              {booking.dropoff_driver_id && (
+                <input
+                  type="checkbox"
+                  checked={booking.dropoff_completed || false}
+                  onChange={e => onCompletedChange(booking.id, 'dropoff', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
