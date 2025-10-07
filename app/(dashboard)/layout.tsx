@@ -39,7 +39,7 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50" suppressHydrationWarning>
         <div className="text-center">
           <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -59,6 +59,7 @@ export default function DashboardLayout({
         className={`flex-1 overflow-auto transition-all duration-300 ${
           sidebarCollapsed ? 'ml-20' : 'ml-64'
         }`}
+        suppressHydrationWarning
       >
         {children}
       </main>
